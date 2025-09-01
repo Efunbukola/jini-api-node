@@ -30,6 +30,11 @@ exports.registerUser = async (req, res) => {
     && req.body.first_name
     && req.body.last_name
     && req.body.password
+    && req.body.country
+    && req.body.city
+    && req.body.state
+    && req.body.country
+    && req.body.zip
     ){
      
     try {
@@ -72,18 +77,18 @@ exports.registerUser = async (req, res) => {
         email: user.email,
         password:hash,
         verification_code:newCode,
-        role_id: ROLES.STUDENT
+        first_name: req.body.first_name,
+        last_name: req.body.last_name,
+        country: req.body.country,
+        city: req.body.city,
+        state: req.body.state,
+        zip: req.body.zip,
       });
 
-      
-      //Save to DB
-      await db.UserProfile.create({
-        user_id:newUser.user_id,
-        first_name:user.first_name,
-        last_name:user.last_name,
-        middle_name:user.middle_name,
-        phone_number:user.phone_number
+       await db.UserLearningProfile.create({
+        user_id:newUser.user_id
       });
+
 
       //generate token
       const token = jwt.sign({ uid: newUser.user_id, type:'USER'},
@@ -127,6 +132,7 @@ exports.getAuthData = async (req, res) => {
     req.userData['password']='';
     let skills = [];
 
+    /*
     if(req.userData.user_id){
 
         let associations = await db.UserSkillAssociation.findAll({
@@ -153,9 +159,10 @@ exports.getAuthData = async (req, res) => {
         }
 
     }
+     */   
     
 
-    let ud = {...req.userData.dataValues, skills};
+    let ud = {...req.userData.dataValues};
 
     res.status(200);
     res.send(ud);
@@ -206,7 +213,6 @@ exports.getAllAvatars = async (req, res) => {
 
 };
 
-
 exports.editUser = async (req, res) => { 
 
 
@@ -214,44 +220,17 @@ exports.editUser = async (req, res) => {
 
   try {
 
-    await db.UserProfile.update(
+    await db.UserLearningProfile.update(
       {
-        country:user.country,
-        city:user.city,
-        state:user.state,
-        city:user.city,
-        zip:user.zip,
-        race:user.race,
-        bio:user.bio,
-        school_name:user.school_name,
-        school_major:user.school_major,
-        school_level:user.school_level,
-        stem_major:user.stem_major,
-        stem_interests:user.stem_interests,
-        hobbies:user.hobbies,
-        photo_url:user.photo_url
+        jini_avatar_id:user.jini_avatar_id,
+        jini_language_id:user.jini_language_id,
+        jini_clinical_skill_id:user.jini_clinical_skill_id,
+        jini_nursing_level_id:user.jini_nursing_level_id
       },
       {where:{
         user_id:req.userData.user_id
       }}
     );
-
-    await db.UserSkillAssociation.destroy({
-      where: {
-        user_id: req.userData.user_id,
-      },
-    });
-
-    for(skill of user.stem_skill_list){
-
-      await db.UserSkillAssociation.create({
-       skill_id:skill.skill_id,
-       user_id: req.userData.user_id,
-      });
-      
-
-    }
-
 
   res.status(200);
   res.send({});

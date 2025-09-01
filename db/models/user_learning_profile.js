@@ -26,32 +26,6 @@ module.exports = function(sequelize, DataTypes) {
       type:DataTypes.UUID,
       field: 'fk_jini_nursing_level_id'
     },
-    first_name: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
-      field: 'first_name'
-    },
-    middle_name: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
-      field: 'middle_name'
-    },
-    last_name: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
-      field: 'last_name'
-    },
-    phone_number: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
-      field: 'phone_number'
-    },
-    
-    photo_url: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
-      field: 'photo_url'
-    },    
     created_at: {
       type: DataTypes.DATE,
       allowNull: true,

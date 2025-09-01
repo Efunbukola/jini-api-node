@@ -27,11 +27,11 @@ const sequelize = new Sequelize(process.env.MYSQL_DBNAME, process.env.MYSQL_USER
 
 const User = require('./models/user.js')(sequelize, Sequelize);
 const UserLearningProfile = require('./models/user_learning_profile.js')(sequelize, Sequelize);
-const JiniNursingLevel = require('./models/user_learning_profile.js')(sequelize, Sequelize);
-const JiniLanguage = require('./models/user_learning_profile.js')(sequelize, Sequelize);
-const JiniCountry = require('./models/user_learning_profile.js')(sequelize, Sequelize);
-const JiniClinicalSkill = require('./models/user_learning_profile.js')(sequelize, Sequelize);
-const JiniAvatar = require('./models/user_learning_profile.js')(sequelize, Sequelize);
+const JiniNursingLevel = require('./models/jini_nursing_level.js')(sequelize, Sequelize);
+const JiniLanguage = require('./models/jini_language.js')(sequelize, Sequelize);
+const JiniCountry = require('./models/jini_country.js')(sequelize, Sequelize);
+const JiniClinicalSkill = require('./models/jini_clinical_skill.js')(sequelize, Sequelize);
+const JiniAvatar = require('./models/jini_avatar.js')(sequelize, Sequelize);
 const BadLoginAttempt = require('./models/bad_login_attempt.js')(sequelize, Sequelize);
 
 User.hasOne(UserLearningProfile,  {foreignKey: 'fk_user_id'})

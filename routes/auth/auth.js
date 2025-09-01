@@ -10,19 +10,22 @@ module.exports = function(app){
     controller.loginUser);
 
     app.post('/api/user/edit',
-            controller.editUser);
+        controller.editUser);
     
-    app.get('/get-all-skills',
-                controller.getAllSkills);
+    app.get('/get-all-nurse-levels',
+        controller.getAllNurseLevels);
+  
+    app.get('/get-all-countries',
+        controller.getAllCountries);
 
-    app.get('/get-all-industries',
-                    controller.getAllIndustries);
-    
-    app.post('/api/vendor/edit',
-            controller.editVendor);
-    
-    app.post('/api/sponsor/edit',
-            controller.editSponsor);   
+    app.get('/get-all-clinical-skills',
+        controller.getAllClinicalSkills);
+        
+    app.get('/get-all-languages',
+        controller.getAllNurseLevels);
+
+    app.get('/get-all-avatars',
+        controller.getAllAvatars);
             
     app.get('/get-auth-data',
     controller.getAuthData);

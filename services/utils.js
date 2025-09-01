@@ -7,33 +7,10 @@ const jwt = require("jsonwebtoken");
 const mysql = require('mysql2');
 const mailgun = require("mailgun-js");
 const DOMAIN = "dsuinnovate.org";
-const mg = mailgun({apiKey: process.env.MAILGUN_API_KEY, domain: DOMAIN});
 const { v4: uuidv4 } = require('uuid');
 
 
 exports.sendPasswordResetEmail = (to, name, reset_link)=>{
-
-  let payload = {
-    from: "DSU Innovate <admin@dsuinnovate.org>",
-    to: [to],
-    subject: "Reset your password (DSU Innovation Day)",
-    template: "password reset",
-	  'h:X-Mailgun-Variables': JSON.stringify({firstName: name, reset_link:reset_link})
-  };
-  
-  console.log('Sending email', payload);
-
-  return new Promise(function(resolve, reject) {
-
-    mg.messages().send(payload, function (error, body) {
-
-      if(error) reject(error);
-      resolve(body);
-
-    });
-      
-  });
- 
 }
 
 
@@ -90,9 +67,7 @@ exports.verifyAuth = (req, res, next) => {
 
         }
 
-        //console.log('Decoded token was ', decoded);
-
-        if(decoded.type==='USER'){
+        console.log('Decoded token was ', decoded);
 
           db.User.findOne(
             {
@@ -120,34 +95,7 @@ exports.verifyAuth = (req, res, next) => {
 
             });
 
-        }else if(decoded.type==='SPONSOR'){
-
-          db.Sponsor.findOne(
-            { where: { sponsor_id:  decoded.uid},
-            include:  { all: true }
-            }).then((user)=>{
-
-                if(user){
-
-                  req['isAuthenticated']=true;
-                  req['authenticatedUserId'] = decoded.uid;
-                  req['userData']=user;
-                  next();
-                  
-                }else{
-                  res.status(401);
-                  res.send("Token needs refreshing");
-                }
-
-            }).catch((error)=>{
-
-              res.status(401);
-              res.send("Token needs refreshing");
-
-            });
-
-
-        }
+       
         });
 
     }

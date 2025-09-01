@@ -44,7 +44,7 @@ app.get('/', (req, res) => {
 
 
 //require('./routes/api/api.js')(app);
-//require('./routes/auth/auth.js')(app);
+require('./routes/auth/auth.js')(app);
 
 const newrelic = require('newrelic')
 newrelic.noticeError('Restarting server...');
