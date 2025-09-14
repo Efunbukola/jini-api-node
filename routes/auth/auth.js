@@ -11,6 +11,12 @@ module.exports = function(app){
 
     app.post('/api/user/edit',
         controller.editUser);
+
+    app.post('/api/xapi/send',
+        controller.sendXAPIStatement);
+
+    app.get('/api/xapi/statements',
+        controller.getXAPIStatement);
     
     app.get('/get-all-nurse-levels',
         controller.getAllNurseLevels);
@@ -22,7 +28,7 @@ module.exports = function(app){
         controller.getAllClinicalSkills);
         
     app.get('/get-all-languages',
-        controller.getAllNurseLevels);
+        controller.getAllLanguages);
 
     app.get('/get-all-avatars',
         controller.getAllAvatars);

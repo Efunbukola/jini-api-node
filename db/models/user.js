@@ -53,6 +53,12 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: true,
       field: 'zip'
     },
+    scribar_product_key: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      unique: false,
+      field: 'scribar_product_key'
+    },
     verification_code: {
       type: DataTypes.STRING(100),
       allowNull: true,
@@ -70,3 +76,6 @@ module.exports = function(sequelize, DataTypes) {
     timestamps: false
   });
 };
+
+
+

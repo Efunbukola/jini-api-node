@@ -7,6 +7,14 @@ const newrelic = require('newrelic');
 const db = require('../../db/sequelize.js');
 const { Op } = require('sequelize');
 
+const axios = require('axios');
+const endpoint = "https://scribar.lrs.io/xapi/statements";
+const username = "f734054f-3f80-4c5d-a5b4-e5f8c50262bb";   // from Veracity dashboard
+const password = "aec3008c-43c0-4d71-af2a-7df7a23edc0d"; // from Veracity dashboard
+const authHeader =
+  "Basic " + Buffer.from(`${username}:${password}`).toString("base64");
+
+
 const LOGIN_ERROR_CODES = {
   USERNAME_NOT_FOUND:1,
   PASSWORD_INVALID:2,
@@ -35,6 +43,7 @@ exports.registerUser = async (req, res) => {
     && req.body.state
     && req.body.country
     && req.body.zip
+    && req.body.scribar_product_key
     ){
      
     try {
@@ -83,6 +92,7 @@ exports.registerUser = async (req, res) => {
         city: req.body.city,
         state: req.body.state,
         zip: req.body.zip,
+        scribar_product_key:req.body.scribar_product_key
       });
 
        await db.UserLearningProfile.create({
@@ -126,52 +136,71 @@ exports.registerUser = async (req, res) => {
 };
 
 exports.getAuthData = async (req, res) => {
-
-  if(req.userData){
-
-    req.userData['password']='';
-    let skills = [];
-
-    /*
-    if(req.userData.user_id){
-
-        let associations = await db.UserSkillAssociation.findAll({
-          where: {
-            user_id: req.userData.user_id
-          },
-          include:  { all: true }
-        });
-
-        for(const assoc of associations){
-
-            let skill = await db.Skill.findOne({
-                where: {
-                  skill_id: assoc.skill_id
-                },
-                include:  { all: true }
-            });
-            
-
-            if(skill){                
-              skills.push(skill)
-            }
-
-        }
-
+  try {
+    if (!req.userData) {
+      return res.status(401).send({});
     }
-     */   
-    
 
-    let ud = {...req.userData.dataValues};
+    // Never return password
+    req.userData.password = '';
 
-    res.status(200);
-    res.send(ud);
-  }else{
-    res.status(401);
-    res.send({});
+    let avatar = {};
+    let language = {};
+    let skill = {};
+    let nursing_level = {};
+    let country = {};
+
+    if (req.userData.user_learning_profile) {
+      const profile = req.userData.user_learning_profile;
+
+      if (profile.jini_avatar_id) {
+        avatar = await db.JiniAvatar.findOne({
+          where: { jini_avatar_id: profile.jini_avatar_id },
+          include: { all: true }
+        });
+      }
+
+      if (profile.jini_language_id) {
+        language = await db.JiniLanguage.findOne({
+          where: { jini_language_id: profile.jini_language_id }
+        });
+      }
+
+      if (profile.jini_clinical_skill_id) {
+        skill = await db.JiniClinicalSkill.findOne({
+          where: { jini_clinical_skill_id: profile.jini_clinical_skill_id }
+        });
+      }
+
+      if (profile.jini_nursing_level_id) {
+        nursing_level = await db.JiniNursingLevel.findOne({
+          where: { jini_nursing_level_id: profile.jini_nursing_level_id }
+        });
+      }
+
+      if (profile.jini_country_id) {
+        country = await db.JiniCountry.findOne({
+          where: { jini_country_id: profile.jini_country_id }
+        });
+      }
+    }
+
+    let ud = {
+      ...req.userData.dataValues,
+      avatar,
+      language,
+      skill,
+      nursing_level,
+      country
+    };
+
+    return res.status(200).send(ud);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send({ error: 'Failed to fetch auth data' });
   }
-
 };
+
 
 exports.getAllNurseLevels= async (req, res) => {
 
@@ -199,9 +228,13 @@ exports.getAllCountries= async (req, res) => {
 
 exports.getAllClinicalSkills = async (req, res) => {
 
-    let skills = await db.JiniClinicalSkill.findAll();
+  const [skills, fields]
+  = await utils.scribar_mysql_connection.promise().query(`SELECT * FROM task`);
+
+  let clinical_skills = skills.map(s=> { return {jini_clinical_skill_name:s.task_name, jini_clinical_skill_id:s.task_id}})
+
     res.status(200);
-    res.send(skills);
+    res.send(clinical_skills);
 
 };
 
@@ -232,6 +265,40 @@ exports.editUser = async (req, res) => {
       }}
     );
 
+  const statement = {
+  "actor": {
+    "objectType": "Agent",
+    "name": req.userData.first_name,
+    "mbox": "mailto:saboorsalaam@gmail.com"
+  },
+  "verb": {
+    "id": "http://adlnet.gov/expapi/verbs/completed",
+    "display": { "en-US": "completed" }
+  },
+  "object": {
+    "id": "http://example.com/activities/user-profile",
+    "definition": {
+      "name": { "en-US": "User Profile Setup" },
+      "description": { "en-US": "The user completed setting up their profile in the jini app." }
+    },
+    "objectType": "Activity"
+  },
+  "result": {
+    "completion": true,
+    "success": true,
+    "response": "Profile fully completed"
+  },
+  "timestamp": "2025-09-01T16:00:00Z"
+};
+
+    const response = await axios.post(endpoint, statement, {
+      headers: {
+        "X-Experience-API-Version": "1.0.3",
+        "Content-Type": "application/json",
+        Authorization: authHeader, // 👈 send Basic Auth
+      },
+    });
+
   res.status(200);
   res.send({});
 
@@ -242,6 +309,53 @@ exports.editUser = async (req, res) => {
   }
 
 };
+
+
+exports.sendXAPIStatement = async (req, res) => {
+  try {
+    const statement = req.body;
+
+    const response = await axios.post(endpoint, statement, {
+      headers: {
+        "X-Experience-API-Version": "1.0.3",
+        "Content-Type": "application/json",
+        Authorization: authHeader, // 👈 send Basic Auth
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Statement stored successfully",
+      lrsResponse: response.data,
+    });
+  } catch (err) {
+    console.error("❌ Error sending statement:", err.response?.data || err.message);
+    res.status(err.response?.status || 500).json({
+      success: false,
+      error: err.response?.data || err.message,
+    });
+  }
+}
+
+// Example GET to pull recent statements
+exports.getXAPIStatement = async (req, res) => {
+  try {
+    const response = await axios.get(endpoint, {
+      headers: {
+        "X-Experience-API-Version": "1.0.3",
+        Authorization: authHeader,
+      },
+    });
+
+    res.status(200).json(response.data);
+  } catch (err) {
+    console.error("❌ Error fetching statements:", err.response?.data || err.message);
+    res.status(err.response?.status || 500).json({
+      success: false,
+      error: err.response?.data || err.message,
+    });
+  }
+}
 
 
 
@@ -353,6 +467,85 @@ exports.loginUser = async (req, res) => {
   }
 
 };
+
+/*
+exports.loginScribarUser = async (req, res) => {
+
+  if(req.body.email && req.body.password){
+
+    let email = req.body.email;
+
+    //check for email in our database, if its already in here the return an error
+    //if its not in there, then check scribar for the credentials and copy into a new account and log the user in automatically
+
+
+    let password = req.body.password;
+
+    try {
+
+    let user = await db.User.findOne(
+      { where: { email: email } }
+    );
+      
+
+    if(!user){
+      throw {error:'Error logging in. Please check email and password and try again.'};
+    }
+
+    const lockouts = await db.sequelize.query(`SELECT * FROM bad_login_attempts
+      WHERE user_id = '${user.user_id}' AND created_at BETWEEN (DATE_SUB(NOW(),INTERVAL 6 MINUTE)) AND NOW() ORDER BY created_at DESC LIMIT 3`, {
+      model: db.BadLoginAttempt,
+      mapToModel: true,
+    });
+
+    console.log('Lockouts found', lockouts);
+
+    if(lockouts.length >= 3){
+        console.log('Locked out of account');
+        throw {error:LOGIN_ERROR_CODES.LOCKED_OUT}
+    }
+
+    const validate = await bcrypt.compare(password, user.password);
+
+    //Password invalid so store bad login attempt
+    if (!validate) {
+        await db.BadLoginAttempt.create({user_id:user.user_id})
+        throw {error:LOGIN_ERROR_CODES.PASSWORD_INVALID}
+    }
+
+    user['password']='';
+    user.setDataValue('type', 'USER');
+
+
+    //Password is valid so pass token to client
+    const token = jwt.sign({ uid: user.user_id, type:'USER'},
+    process.env.JWT_KEY,
+    {
+      algorithm: 'HS256',
+      allowInsecureKeySizes: true,
+      expiresIn: '72 hours', // 72 hours
+    });
+
+      res.status(200);
+      res.send({'auth_token':token, user: user});
+
+      }catch(e){
+
+        console.log(e);
+        res.status(500);
+        res.send(e);
+
+      }
+
+  }else{
+
+    console.log('Missing params');
+    res.status(500);
+    res.send({});
+    
+  }
+
+};*/
 
 exports.sendPasswordResetEmail = async (req, res) => {
 

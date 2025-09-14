@@ -1,8 +1,8 @@
 module.exports = function(sequelize, DataTypes) {
   return sequelize.define('jini_avatar', {
     jini_avatar_id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+     type: DataTypes.INTEGER,
+      autoIncrement: true,
       primaryKey: true,
       field: 'pk_jini_avatar_id'
     },

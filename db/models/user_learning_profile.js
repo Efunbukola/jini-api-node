@@ -11,19 +11,19 @@ module.exports = function(sequelize, DataTypes) {
       field: 'fk_user_id'
     },
     jini_avatar_id: {
-      type:DataTypes.UUID,
+      type:DataTypes.INTEGER,
       field: 'fk_jini_avatar_id'
     },
     jini_language_id: {
-      type:DataTypes.UUID,
+      type:DataTypes.INTEGER,
       field: 'fk_jini_language_id'
     },
     jini_clinical_skill_id: {
-      type:DataTypes.UUID,
+      type:DataTypes.INTEGER,
       field: 'fk_jini_clinical_skill_id'
     },
     jini_nursing_level_id: {
-      type:DataTypes.UUID,
+      type:DataTypes.INTEGER,
       field: 'fk_jini_nursing_level_id'
     },
     created_at: {

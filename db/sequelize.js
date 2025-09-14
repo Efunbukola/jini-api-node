@@ -36,6 +36,15 @@ const BadLoginAttempt = require('./models/bad_login_attempt.js')(sequelize, Sequ
 
 User.hasOne(UserLearningProfile,  {foreignKey: 'fk_user_id'})
 
+
+/*
+JiniAvatar.hasOne(UserLearningProfile)
+JiniLanguage.hasOne(JiniLanguage)
+UserLearningProfile.hasOne(JiniClinicalSkill)
+UserLearningProfile.hasOne(JiniNursingLevel)
+*/
+
+
 /*
 Team.hasMany(TeamMembership, {
   foreignKey: "fk_team_id",
